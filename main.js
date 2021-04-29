@@ -2,6 +2,7 @@
 
 const btn = document.getElementById('btn-country');
 const countriesContainer = document.getElementById('countries');
+const loc = document.getElementById('loc');
 
 const getJSON = (url, err = 'Something went wrong!') => {
   return fetch(url).then(response => {
@@ -64,7 +65,7 @@ const getPosition = () => {
     navigator.geolocation.getCurrentPosition(resolve, reject);
   });
 };
-
+/*
 const whereAmI = () => {
   getPosition()
     .then(pos => {
@@ -87,8 +88,35 @@ const whereAmI = () => {
       }
     })
     .catch(err => console.error(err.message));
+};*/
+
+//whereAmI ASYNC/AWAIT VERSION
+const whereAmI = async () => {
+  btn.removeEventListener('click', whereAmI);
+  btn.remove();
+  try {
+    const pos = await getPosition();
+    const { latitude: lat, longitude: lng } = pos.coords;
+
+    const geo = await fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`
+    );
+    if (!geo.ok) renderError(new Error('Geocode error'));
+
+    const geoData = await geo.json();
+
+    //console.log(`You are in ${geoData.countryName}, ${geoData.locality}`);
+
+    loc.insertAdjacentText(
+      'beforeend',
+      `You are in ${geoData.countryName}, ${geoData.locality}`
+    );
+    loc.style.opacity = 1;
+    getCountryData(geoData.countryName);
+  } catch (err) {
+    console.error(err.message);
+  }
 };
+
 ///EVENTS LISTENER
 btn.addEventListener('click', whereAmI);
-
-//api key
